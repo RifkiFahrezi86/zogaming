@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="250" height="50" viewBox="0 0 250 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Mask for the X cut - creates transparent X gap -->
+    <defs>
+        <mask id="x-gap">
+            <circle cx="25" cy="25" r="25" fill="white"/>
+            <!-- Thick black strokes to create X transparency -->
+            <path d="M0 0 L50 50" stroke="black" stroke-width="6"/>
+            <path d="M50 0 L0 50" stroke="black" stroke-width="6"/>
+        </mask>
+        <clipPath id="circle-clip">
+            <circle cx="25" cy="25" r="23"/>
+        </clipPath>
+    </defs>
+    
+    <!-- Logo Mark Container with X mask, clipped to circle -->
+    <g mask="url(#x-gap)" clip-path="url(#circle-clip)">
+        <!-- Base white circle -->
+        <circle cx="25" cy="25" r="25" fill="white"/>
+        
+        <!-- Top triangle (red) -->
+        <polygon points="25,25 0,0 50,0" fill="#EE626B"/>
+        
+        <!-- Bottom triangle (red) -->
+        <polygon points="25,25 0,50 50,50" fill="#EE626B"/>
+    </g>
+    
+    <!-- Text -->
+    <text x="58" y="35" font-family="Arial, sans-serif" font-weight="800" font-size="28" fill="white" letter-spacing="0.5">ZOGAMING</text>
+</svg>

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "instant-delivery",
+    "label": "Instant Delivery",
+    "color": "#10b981",
+    "textColor": "#ffffff",
+    "icon": "bolt",
+    "active": true
+  },
+  {
+    "id": "best-seller",
+    "label": "Best Seller",
+    "color": "#f59e0b",
+    "textColor": "#ffffff",
+    "icon": "fire",
+    "active": true
+  },
+  {
+    "id": "new-release",
+    "label": "New Release",
+    "color": "#8b5cf6",
+    "textColor": "#ffffff",
+    "icon": "star",
+    "active": true
+  },
+  {
+    "id": "limited-edition",
+    "label": "Limited Edition",
+    "color": "#ef4444",
+    "textColor": "#ffffff",
+    "icon": "gem",
+    "active": true
+  },
+  {
+    "id": "pre-order",
+    "label": "Pre-Order",
+    "color": "#3b82f6",
+    "textColor": "#ffffff",
+    "icon": "gift",
+    "active": true
+  }
+]

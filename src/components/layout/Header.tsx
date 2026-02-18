@@ -1,0 +1,273 @@
+'use client';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useData } from '@/lib/DataContext';
+import { formatRupiah } from '@/lib/types';
+
+const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/shop', label: 'Our Shop' },
+    { href: '/products/1', label: 'Product Details' },
+    { href: '/contact', label: 'Contact Us' },
+];
+
+export default function Header() {
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const pathname = usePathname();
+    const { cart, removeFromCart, updateCartQuantity, clearCart } = useData();
+
+    const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const cartTotal = cart.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 100);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    return (
+        <>
+            <header
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                    ? 'bg-[#010101] shadow-lg rounded-b-3xl py-2'
+                    : 'bg-transparent py-10'
+                    }`}
+            >
+                <div className="container mx-auto px-4">
+                    <nav className="flex items-center justify-between">
+                        {/* Logo */}
+                        <Link href="/" className="flex-shrink-0">
+                            <Image
+                                src="/images/logo.svg"
+                                alt="ZOGAMING"
+                                width={isScrolled ? 120 : 160}
+                                height={isScrolled ? 24 : 32}
+                                className="transition-all duration-300"
+                            />
+                        </Link>
+
+                        {/* Desktop Navigation */}
+                        <ul className="hidden md:flex items-center gap-2">
+                            {navLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link
+                                        href={link.href}
+                                        className={`px-5 py-2 rounded-full text-sm font-light text-white transition-all duration-300 ${pathname === link.href
+                                            ? 'bg-white/10'
+                                            : 'hover:bg-white/10'
+                                            }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                            {/* Cart Button */}
+                            <li>
+                                <button
+                                    onClick={() => setIsCartOpen(true)}
+                                    className="relative px-4 py-2 rounded-full text-sm font-light text-white hover:bg-white/10 transition-all duration-300"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                    </svg>
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee626b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/admin"
+                                    className="px-5 py-2 rounded-full text-sm font-medium text-white bg-[#ee626b] hover:bg-[#d4555d] transition-all duration-300 uppercase"
+                                >
+                                    Admin
+                                </Link>
+                            </li>
+                        </ul>
+
+                        {/* Mobile: Cart + Menu Button */}
+                        <div className="md:hidden flex items-center gap-2">
+                            <button
+                                onClick={() => setIsCartOpen(true)}
+                                className="relative p-2 text-white"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="9" cy="21" r="1" />
+                                    <circle cx="20" cy="21" r="1" />
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                </svg>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee626b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                className="flex flex-col gap-1.5 p-2"
+                                aria-label="Toggle menu"
+                            >
+                                <span className={`w-6 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                                <span className={`w-6 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+                                <span className={`w-6 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                            </button>
+                        </div>
+                    </nav>
+
+                    {/* Mobile Menu */}
+                    <div
+                        className={`md:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-96 mt-4' : 'max-h-0'
+                            }`}
+                    >
+                        <ul className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                            {navLinks.map((link) => (
+                                <li key={link.href} className="border-t border-gray-100 first:border-t-0">
+                                    <Link
+                                        href={link.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`block px-6 py-4 text-sm font-medium transition-colors ${pathname === link.href
+                                            ? 'text-[#ee626b] bg-gray-50'
+                                            : 'text-gray-800 hover:text-[#ee626b]'
+                                            }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                            <li className="border-t border-gray-100">
+                                <Link
+                                    href="/admin"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="block px-6 py-4 text-sm font-medium text-[#ee626b] hover:bg-gray-50"
+                                >
+                                    Admin Dashboard
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            {/* Cart Sidebar */}
+            {isCartOpen && (
+                <div className="fixed inset-0 z-[60]">
+                    <div className="absolute inset-0 bg-black/50" onClick={() => setIsCartOpen(false)} />
+                    <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col animate-slide-in-right">
+                        {/* Cart Header */}
+                        <div className="flex items-center justify-between p-6 border-b">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                Shopping Cart ({cartCount})
+                            </h3>
+                            <button
+                                onClick={() => setIsCartOpen(false)}
+                                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Cart Items */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {cart.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" className="mx-auto mb-4">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                    </svg>
+                                    <p className="text-gray-400">Your cart is empty</p>
+                                    <button
+                                        onClick={() => setIsCartOpen(false)}
+                                        className="mt-4 text-[#ee626b] font-medium hover:underline"
+                                    >
+                                        Continue Shopping
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {cart.map((item) => {
+                                        const price = item.product.salePrice || item.product.price;
+                                        return (
+                                            <div key={item.product.id} className="flex gap-4 p-3 rounded-2xl bg-gray-50">
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                                                    <Image
+                                                        src={item.product.image}
+                                                        alt={item.product.name}
+                                                        width={64}
+                                                        height={64}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-bold text-gray-900 truncate">{item.product.name}</h4>
+                                                    <p className="text-sm text-[#ee626b] font-semibold">{formatRupiah(price)}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <button
+                                                            onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                                                            className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-300 transition-colors"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                                                        <button
+                                                            onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                                                            className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold hover:bg-gray-300 transition-colors"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeFromCart(item.product.id)}
+                                                    className="self-start p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <polyline points="3 6 5 6 21 6" />
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Cart Footer */}
+                        {cart.length > 0 && (
+                            <div className="p-6 border-t space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-lg font-bold text-gray-900">Total:</span>
+                                    <span className="text-2xl font-bold text-[#010101]">{formatRupiah(cartTotal)}</span>
+                                </div>
+                                <button className="w-full h-12 bg-[#010101] text-white font-semibold rounded-full hover:bg-[#ee626b] transition-colors">
+                                    Checkout
+                                </button>
+                                <button
+                                    onClick={clearCart}
+                                    className="w-full h-10 text-sm text-gray-500 hover:text-red-500 transition-colors"
+                                >
+                                    Clear Cart
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}

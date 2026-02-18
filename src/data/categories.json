@@ -1,0 +1,37 @@
+[
+    {
+        "id": "1",
+        "name": "Action",
+        "slug": "action",
+        "image": "/images/categories-01.jpg",
+        "description": "Fast-paced action games"
+    },
+    {
+        "id": "2",
+        "name": "Adventure",
+        "slug": "adventure",
+        "image": "/images/categories-02.jpg",
+        "description": "Epic adventure games"
+    },
+    {
+        "id": "3",
+        "name": "Strategy",
+        "slug": "strategy",
+        "image": "/images/categories-03.jpg",
+        "description": "Strategic thinking games"
+    },
+    {
+        "id": "4",
+        "name": "Racing",
+        "slug": "racing",
+        "image": "/images/categories-04.jpg",
+        "description": "High-speed racing games"
+    },
+    {
+        "id": "5",
+        "name": "RPG",
+        "slug": "rpg",
+        "image": "/images/categories-05.jpg",
+        "description": "Role-playing games"
+    }
+]

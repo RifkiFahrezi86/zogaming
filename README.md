@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LUGX Gaming - Next.js Application
 
-## Getting Started
+A modern gaming shop e-commerce frontend built with Next.js 14, TypeScript, and Tailwind CSS.
 
-First, run the development server:
+## 🎮 Features
+
+### Public Site
+- **Home Page** - Hero banner, features, trending games, categories, newsletter
+- **Shop Page** - Product grid with category filters and pagination
+- **Product Details** - Full product info, reviews, related items
+- **Contact Page** - Contact form with Google Maps integration
+
+### Admin Dashboard
+- **Dashboard** - Stats overview, recent orders, quick actions
+- **Products** - Full CRUD with search/filter
+- **Categories** - Grid view with product counts
+- **Orders** - Status management and order details
+- **Settings** - Site configuration
+
+## 🚀 Getting Started
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) for the public site.
+Open [http://localhost:3000/admin](http://localhost:3000/admin) for the admin dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── admin/              # Admin dashboard pages
+│   ├── shop/               # Shop page
+│   ├── products/[id]/      # Product details
+│   └── contact/            # Contact page
+├── components/
+│   ├── layout/             # Header, Footer
+│   └── ui/                 # ProductCard, CategoryCard, Preloader
+├── data/                   # Mock JSON data
+└── lib/                    # Types, DataContext
+```
 
-## Learn More
+## 💾 Data Persistence
 
-To learn more about Next.js, take a look at the following resources:
+All data is stored in localStorage. Changes made in the admin dashboard persist across browser sessions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Design
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Public Site**: Blue (#0071f8) and pink (#ee626b) accent colors
+- **Admin Dashboard**: Dark navy theme with gradient accents
 
-## Deploy on Vercel
+## 📝 License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Based on TemplateMo 589 LUGX Gaming template.
