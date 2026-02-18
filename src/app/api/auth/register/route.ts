@@ -70,10 +70,24 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Register error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    // Check common DB issues
+    if (message.includes('relation') && message.includes('does not exist')) {
+      return NextResponse.json(
+        { error: 'Database belum di-setup. Jalankan SQL setup di Neon SQL Editor.' },
+        { status: 500 }
+      );
+    }
+    if (message.includes('connect') || message.includes('ECONNREFUSED')) {
+      return NextResponse.json(
+        { error: 'Tidak bisa terhubung ke database. Periksa DATABASE_URL.' },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server' },
+      { error: 'Terjadi kesalahan server: ' + message },
       { status: 500 }
     );
   }

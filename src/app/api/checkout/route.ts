@@ -73,10 +73,17 @@ export async function POST(request: NextRequest) {
         paymentExpiry: order.paymentExpiry,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Checkout error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    if (message.includes('relation') && message.includes('does not exist')) {
+      return NextResponse.json(
+        { error: 'Database belum di-setup. Jalankan SQL setup di Neon SQL Editor.' },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server' },
+      { error: 'Terjadi kesalahan server: ' + message },
       { status: 500 }
     );
   }

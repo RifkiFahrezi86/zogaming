@@ -75,14 +75,15 @@ export async function POST(request: NextRequest) {
 
     // Action: select payment method
     if (action === 'select_method') {
-      if (!paymentMethod || !['QRIS', 'VA', 'GOPAY'].includes(paymentMethod)) {
+      const methodUpper = paymentMethod?.toUpperCase();
+      if (!methodUpper || !['QRIS', 'VA', 'GOPAY'].includes(methodUpper)) {
         return NextResponse.json({ error: 'Metode pembayaran tidak valid' }, { status: 400 });
       }
 
       const updated = await prisma.order.update({
         where: { id: orderId },
         data: { 
-          paymentMethod: paymentMethod as 'QRIS' | 'VA' | 'GOPAY',
+          paymentMethod: methodUpper as 'QRIS' | 'VA' | 'GOPAY',
           paymentStatus: 'PENDING',
         },
       });

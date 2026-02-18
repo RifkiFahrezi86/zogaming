@@ -7,7 +7,16 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const connectionString = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+
+  if (!connectionString || connectionString.includes('xxxxx') || connectionString.includes('user:password')) {
+    console.error('[Prisma] DATABASE_URL is not configured! Set it in .env or Vercel environment variables.');
+  }
+
+  const pool = new Pool({
+    connectionString,
+    ssl: connectionString?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
+  });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
