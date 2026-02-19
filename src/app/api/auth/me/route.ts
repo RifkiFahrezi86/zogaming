@@ -11,13 +11,13 @@ export async function GET() {
 
     if (user.role === 'admin') {
       return NextResponse.json({
-        user: { id: 'admin', name: 'Admin', email: user.email, role: 'admin' },
+        user: { id: 'admin', name: 'Admin', phone: process.env.ADMIN_WHATSAPP || '6285954092060', role: 'admin' },
       });
     }
 
     const customer = await prisma.customer.findUnique({
       where: { id: user.id },
-      select: { id: true, name: true, email: true, phone: true },
+      select: { id: true, name: true, phone: true },
     });
 
     if (!customer) {

@@ -16,7 +16,7 @@ const navLinks = [
 interface AuthUser {
     id: string;
     name: string;
-    email: string;
+    phone?: string;
     role: 'admin' | 'customer';
 }
 
@@ -118,9 +118,15 @@ export default function Header() {
                                         <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50" onClick={(e) => e.stopPropagation()}>
                                             <div className="px-4 py-3 bg-gray-50 border-b">
                                                 <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                                <p className="text-xs text-gray-500 truncate">📱 {user.phone}</p>
                                                 <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{user.role}</span>
                                             </div>
+                                            {user.role === 'customer' && (
+                                                <Link href="/pesanan" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                    Pesanan Saya
+                                                </Link>
+                                            )}
                                             {user.role === 'admin' && (
                                                 <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
@@ -170,8 +176,13 @@ export default function Header() {
                                 <>
                                     <li className="border-t border-gray-100 px-6 py-3 bg-gray-50">
                                         <p className="text-sm font-bold text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                        <p className="text-xs text-gray-500">📱 {user.phone}</p>
                                     </li>
+                                    {user.role === 'customer' && (
+                                        <li className="border-t border-gray-100">
+                                            <Link href="/pesanan" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-blue-600 hover:bg-blue-50">📦 Pesanan Saya</Link>
+                                        </li>
+                                    )}
                                     {user.role === 'admin' && (
                                         <li className="border-t border-gray-100">
                                             <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-purple-600 hover:bg-purple-50">Admin Dashboard</Link>

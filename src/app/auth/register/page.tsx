@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', phone: '' });
+  const [form, setForm] = useState({ name: '', password: '', confirmPassword: '', phone: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,6 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name,
-          email: form.email,
           password: form.password,
           phone: form.phone,
         }),
@@ -95,20 +94,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-[#ee626b] focus:ring-2 focus:ring-[#ee626b]/20 outline-none transition-all"
-                  placeholder="email@example.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor WhatsApp</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor WhatsApp <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   name="phone"
@@ -116,7 +102,9 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-[#ee626b] focus:ring-2 focus:ring-[#ee626b]/20 outline-none transition-all"
                   placeholder="0859xxxxxxxx"
+                  required
                 />
+                <p className="text-xs text-gray-400 mt-1">Nomor ini digunakan untuk login dan menerima notifikasi</p>
               </div>
 
               <div>

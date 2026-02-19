@@ -183,7 +183,7 @@ export default function AdminOrdersManagementPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && loadOrders()}
-          placeholder="Cari order number, nama, email..."
+          placeholder="Cari order number, nama, WhatsApp..."
           className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 outline-none focus:border-blue-500"
         />
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -257,10 +257,6 @@ export default function AdminOrdersManagementPage() {
                 <div className="flex justify-between">
                   <span className="text-slate-400">Customer</span>
                   <span className="text-white">{selectedOrder.customerName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Email</span>
-                  <span className="text-white text-xs">{selectedOrder.customerEmail}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">WhatsApp</span>
@@ -346,14 +342,7 @@ export default function AdminOrdersManagementPage() {
                             disabled={actionLoading === 'deliver'}
                             className="flex-1 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 disabled:opacity-50 text-xs"
                           >
-                            📱 WhatsApp
-                          </button>
-                          <button
-                            onClick={() => handleDeliver('email')}
-                            disabled={actionLoading === 'deliver'}
-                            className="flex-1 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50 text-xs"
-                          >
-                            📧 Email
+                            📱 Kirim via WhatsApp
                           </button>
                         </div>
                       </div>

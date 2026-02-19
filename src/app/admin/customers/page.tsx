@@ -61,7 +61,7 @@ export default function AdminCustomersPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama, email, atau nomor HP..."
+            placeholder="Cari nama atau nomor WhatsApp..."
             className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 outline-none focus:border-blue-500 transition-colors"
           />
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -77,7 +77,6 @@ export default function AdminCustomersPage() {
             <thead>
               <tr className="border-b border-slate-700/50">
                 <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Customer</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
                 <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">WhatsApp</th>
                 <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Orders</th>
                 <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Terdaftar</th>
@@ -86,14 +85,14 @@ export default function AdminCustomersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-slate-400">
+                  <td colSpan={4} className="text-center py-12 text-slate-400">
                     <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     Memuat data...
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-slate-400">
+                  <td colSpan={4} className="text-center py-12 text-slate-400">
                     Belum ada customer terdaftar
                   </td>
                 </tr>
@@ -108,7 +107,6 @@ export default function AdminCustomersPage() {
                         <span className="text-white font-medium">{customer.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-300">{customer.email}</td>
                     <td className="px-6 py-4 text-slate-300">{customer.phone || '-'}</td>
                     <td className="px-6 py-4">
                       <span className="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-sm">

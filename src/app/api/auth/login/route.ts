@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, createToken, ADMIN_EMAIL, ADMIN_PASSWORD } from '@/lib/auth';
+import { verifyPassword, createToken, ADMIN_EMAIL, ADMIN_PHONE, ADMIN_PASSWORD } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { phone, email, password } = body;
 
-    if (!email || !password) {
+    // Support both phone and email login
+    const loginId = phone || email;
+    if (!loginId || !password) {
       return NextResponse.json(
-        { error: 'Email dan password wajib diisi' },
+        { error: 'Nomor WhatsApp dan password wajib diisi' },
         { status: 400 }
       );
     }
 
-    // Check admin login
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    // Format phone if provided
+    let formattedPhone = '';
+    if (phone) {
+      formattedPhone = phone.replace(/[^0-9]/g, '');
+      if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
+      else if (!formattedPhone.startsWith('62')) formattedPhone = '62' + formattedPhone;
+    }
+
+    // Check admin login (by email or phone)
+    const isAdminEmail = email && email === ADMIN_EMAIL;
+    const isAdminPhone = formattedPhone && formattedPhone === ADMIN_PHONE;
+    if ((isAdminEmail || isAdminPhone) && password === ADMIN_PASSWORD) {
       const token = createToken({
         id: 'admin',
         email: ADMIN_EMAIL,
@@ -28,7 +40,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: 'admin',
           name: 'Admin',
-          email: ADMIN_EMAIL,
+          phone: ADMIN_PHONE,
           role: 'admin',
         },
       });
@@ -44,11 +56,17 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Customer login
-    const customer = await prisma.customer.findUnique({ where: { email } });
+    // Customer login - search by phone or email
+    let customer = null;
+    if (formattedPhone) {
+      customer = await prisma.customer.findFirst({ where: { phone: formattedPhone } });
+    }
+    if (!customer && email) {
+      customer = await prisma.customer.findUnique({ where: { email } });
+    }
     if (!customer) {
       return NextResponse.json(
-        { error: 'Email atau password salah' },
+        { error: 'Nomor WhatsApp atau password salah' },
         { status: 401 }
       );
     }
@@ -73,7 +91,6 @@ export async function POST(request: NextRequest) {
       user: {
         id: customer.id,
         name: customer.name,
-        email: customer.email,
         phone: customer.phone,
         role: 'customer',
       },

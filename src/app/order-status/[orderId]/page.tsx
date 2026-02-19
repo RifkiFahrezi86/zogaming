@@ -10,7 +10,6 @@ interface OrderDetail {
   id: string;
   orderNumber: string;
   customerName: string;
-  customerEmail: string;
   customerPhone: string;
   productName: string;
   productPrice: number;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { notifyAdminPaymentConfirm } from '@/lib/whatsapp';
 
 // GET - Get payment settings & order details for payment page
 export async function GET(request: NextRequest) {
@@ -98,9 +99,19 @@ export async function POST(request: NextRequest) {
         data: { paymentStatus: 'PENDING' }, // Admin will verify
       });
 
+      // Send WhatsApp to admin immediately
+      await notifyAdminPaymentConfirm(
+        order.orderNumber,
+        order.customerName,
+        order.customerPhone,
+        order.productName,
+        order.total,
+        order.paymentMethod || 'Unknown'
+      );
+
       return NextResponse.json({
         success: true,
-        message: 'Konfirmasi pembayaran diterima. Menunggu verifikasi admin.',
+        message: 'Konfirmasi pembayaran diterima. Admin akan segera memverifikasi.',
         order: updated,
       });
     }

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { notifyAdminNewOrder, notifyCustomerOrderCreated } from '@/lib/whatsapp';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerName, customerEmail, customerPhone, productId, productName, productPrice, quantity } = body;
+    const { customerName, customerPhone, productId, productName, productPrice, quantity } = body;
 
-    // Validation
-    if (!customerName || !customerEmail || !customerPhone || !productId || !productName || !productPrice) {
+    // Validation - only name and phone required
+    if (!customerName || !customerPhone || !productId || !productName || !productPrice) {
       return NextResponse.json(
-        { error: 'Semua field wajib diisi (nama, email, WhatsApp, produk)' },
+        { error: 'Semua field wajib diisi (nama, WhatsApp, produk)' },
         { status: 400 }
       );
     }
@@ -22,20 +23,30 @@ export async function POST(request: NextRequest) {
       phone = '62' + phone;
     }
 
+    // Auto-generate email from phone
+    const autoEmail = `${phone}@wa.zogaming`;
+
     // Generate order number
     const orderCount = await prisma.order.count();
     const orderNumber = `ORD-${String(orderCount + 1).padStart(3, '0')}`;
 
-    // Find or create customer
-    let customer = await prisma.customer.findUnique({ where: { email: customerEmail } });
+    // Find or create customer by phone
+    let customer = await prisma.customer.findFirst({ 
+      where: { 
+        OR: [
+          { phone: phone },
+          { email: autoEmail },
+        ]
+      } 
+    });
     if (!customer) {
       const { hashPassword } = await import('@/lib/auth');
       customer = await prisma.customer.create({
         data: {
           name: customerName,
-          email: customerEmail,
+          email: autoEmail,
           phone: phone,
-          password: await hashPassword('default123'), // Default password
+          password: await hashPassword('default123'),
         },
       });
     }
@@ -51,7 +62,7 @@ export async function POST(request: NextRequest) {
         orderNumber,
         customerId: customer.id,
         customerName,
-        customerEmail,
+        customerEmail: autoEmail,
         customerPhone: phone,
         productId,
         productName,
@@ -63,6 +74,12 @@ export async function POST(request: NextRequest) {
         paymentExpiry,
       },
     });
+
+    // Send WhatsApp to ADMIN immediately
+    await notifyAdminNewOrder(orderNumber, customerName, phone, productName, total);
+    
+    // Send WhatsApp to CUSTOMER with order confirmation
+    await notifyCustomerOrderCreated(phone, orderNumber, productName, total);
 
     return NextResponse.json({
       success: true,

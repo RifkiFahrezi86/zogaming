@@ -5,12 +5,12 @@ import { hashPassword, createToken } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, phone } = body;
+    const { name, password, phone } = body;
 
-    // Validation
-    if (!name || !email || !password) {
+    // Validation - only name, phone, password required
+    if (!name || !phone || !password) {
       return NextResponse.json(
-        { error: 'Nama, email, dan password wajib diisi' },
+        { error: 'Nama, Nomor WhatsApp, dan password wajib diisi' },
         { status: 400 }
       );
     }
@@ -22,11 +22,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email exists
-    const existing = await prisma.customer.findUnique({ where: { email } });
+    // Format phone
+    let formattedPhone = phone.replace(/[^0-9]/g, '');
+    if (formattedPhone.startsWith('0')) formattedPhone = '62' + formattedPhone.slice(1);
+    else if (!formattedPhone.startsWith('62')) formattedPhone = '62' + formattedPhone;
+
+    // Auto-generate email from phone
+    const autoEmail = `${formattedPhone}@wa.zogaming`;
+
+    // Check if phone already registered
+    const existing = await prisma.customer.findFirst({ 
+      where: { 
+        OR: [
+          { phone: formattedPhone },
+          { email: autoEmail },
+        ]
+      } 
+    });
     if (existing) {
       return NextResponse.json(
-        { error: 'Email sudah terdaftar' },
+        { error: 'Nomor WhatsApp sudah terdaftar' },
         { status: 409 }
       );
     }
@@ -36,9 +51,9 @@ export async function POST(request: NextRequest) {
     const customer = await prisma.customer.create({
       data: {
         name,
-        email,
+        email: autoEmail,
         password: hashedPassword,
-        phone: phone || null,
+        phone: formattedPhone,
       },
     });
 
@@ -56,7 +71,6 @@ export async function POST(request: NextRequest) {
       user: {
         id: customer.id,
         name: customer.name,
-        email: customer.email,
         phone: customer.phone,
       },
     });

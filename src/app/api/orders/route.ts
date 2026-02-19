@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { orderNumber: { contains: search, mode: 'insensitive' } },
         { customerName: { contains: search, mode: 'insensitive' } },
-        { customerEmail: { contains: search, mode: 'insensitive' } },
+        { customerPhone: { contains: search, mode: 'insensitive' } },
       ];
     }
 

@@ -45,4 +45,5 @@ export async function getCurrentUser(): Promise<JWTPayload | null> {
 
 // Admin credentials (simple - you can change this)
 export const ADMIN_EMAIL = 'admin@zogaming.com';
+export const ADMIN_PHONE = '6285954092060';
 export const ADMIN_PASSWORD = 'admin123';
