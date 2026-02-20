@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useData } from '@/lib/DataContext';
 import { formatRupiah } from '@/lib/types';
@@ -13,19 +13,10 @@ const navLinks = [
     { href: '/contact', label: 'Contact' },
 ];
 
-interface AuthUser {
-    id: string;
-    name: string;
-    phone?: string;
-    role: 'admin' | 'customer';
-}
-
 export default function Header() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const { cart, removeFromCart, updateCartQuantity, clearCart } = useData();
@@ -33,56 +24,11 @@ export default function Header() {
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cart.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0);
 
-    const checkAuth = useCallback(async () => {
-        try {
-            const res = await fetch('/api/auth/me');
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data.user);
-            } else {
-                setUser(null);
-            }
-        } catch {
-            setUser(null);
-        }
-    }, []);
-
-    useEffect(() => {
-        checkAuth();
-    }, [checkAuth, pathname]);
-
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            setUser(null);
-            setIsUserMenuOpen(false);
-            router.push('/');
-        } catch {
-            // ignore
-        }
-    };
-
-    const handleCartCheckout = () => {
-        if (cart.length >= 1) {
-            const item = cart[0];
-            setIsCartOpen(false);
-            router.push(`/checkout?productId=${item.product.id}`);
-        }
-    };
-
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 100);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
-    useEffect(() => {
-        if (isUserMenuOpen) {
-            const close = () => setIsUserMenuOpen(false);
-            document.addEventListener('click', close);
-            return () => document.removeEventListener('click', close);
-        }
-    }, [isUserMenuOpen]);
 
     return (
         <>
@@ -108,44 +54,12 @@ export default function Header() {
                                     {cartCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ee626b] text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
                                 </button>
                             </li>
-                            {user ? (
-                                <li className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsUserMenuOpen(!isUserMenuOpen); }} className="flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white hover:bg-white/10 transition-all duration-300">
-                                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#ee626b] to-[#d4555d] flex items-center justify-center text-xs font-bold">{user.name.charAt(0).toUpperCase()}</div>
-                                        <span className="font-light hidden lg:inline max-w-[100px] truncate">{user.name}</span>
-                                    </button>
-                                    {isUserMenuOpen && (
-                                        <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50" onClick={(e) => e.stopPropagation()}>
-                                            <div className="px-4 py-3 bg-gray-50 border-b">
-                                                <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-500 truncate">📱 {user.phone}</p>
-                                                <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{user.role}</span>
-                                            </div>
-                                            {user.role === 'customer' && (
-                                                <Link href="/pesanan" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                                    Pesanan Saya
-                                                </Link>
-                                            )}
-                                            {user.role === 'admin' && (
-                                                <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                                                    Admin Dashboard
-                                                </Link>
-                                            )}
-                                            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                                                Logout
-                                            </button>
-                                        </div>
-                                    )}
-                                </li>
-                            ) : (
-                                <>
-                                    <li><Link href="/auth/login" className="px-5 py-2 rounded-full text-sm font-light text-white hover:bg-white/10 transition-all duration-300">Login</Link></li>
-                                    <li><Link href="/auth/register" className="px-5 py-2 rounded-full text-sm font-semibold bg-[#ee626b] text-white hover:bg-[#d4555d] transition-all duration-300">Register</Link></li>
-                                </>
-                            )}
+                            <li>
+                                <Link href="/admin" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm text-white hover:bg-white/10 transition-all duration-300">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#ee626b] to-[#d4555d] flex items-center justify-center text-xs font-bold">A</div>
+                                    <span className="font-light hidden lg:inline">Admin</span>
+                                </Link>
+                            </li>
                         </ul>
 
                         {/* Mobile */}
@@ -172,32 +86,9 @@ export default function Header() {
                                     </Link>
                                 </li>
                             ))}
-                            {user ? (
-                                <>
-                                    <li className="border-t border-gray-100 px-6 py-3 bg-gray-50">
-                                        <p className="text-sm font-bold text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-500">📱 {user.phone}</p>
-                                    </li>
-                                    {user.role === 'customer' && (
-                                        <li className="border-t border-gray-100">
-                                            <Link href="/pesanan" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-blue-600 hover:bg-blue-50">📦 Pesanan Saya</Link>
-                                        </li>
-                                    )}
-                                    {user.role === 'admin' && (
-                                        <li className="border-t border-gray-100">
-                                            <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-purple-600 hover:bg-purple-50">Admin Dashboard</Link>
-                                        </li>
-                                    )}
-                                    <li className="border-t border-gray-100">
-                                        <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="block w-full text-left px-6 py-4 text-sm font-medium text-red-500 hover:bg-red-50">Logout</button>
-                                    </li>
-                                </>
-                            ) : (
-                                <>
-                                    <li className="border-t border-gray-100"><Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-gray-800 hover:text-[#ee626b]">Login</Link></li>
-                                    <li className="border-t border-gray-100"><Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-[#ee626b] hover:bg-red-50">Register</Link></li>
-                                </>
-                            )}
+                            <li className="border-t border-gray-100">
+                                <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block px-6 py-4 text-sm font-medium text-purple-600 hover:bg-purple-50">Admin Dashboard</Link>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -254,10 +145,6 @@ export default function Header() {
                                     <span className="text-lg font-bold text-gray-900">Total:</span>
                                     <span className="text-2xl font-bold text-[#010101]">{formatRupiah(cartTotal)}</span>
                                 </div>
-                                <button onClick={handleCartCheckout} className="w-full h-12 bg-[#ee626b] text-white font-semibold rounded-full hover:bg-[#d4555d] transition-colors flex items-center justify-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                                    Checkout Now
-                                </button>
                                 <button onClick={clearCart} className="w-full h-10 text-sm text-gray-500 hover:text-red-500 transition-colors">Clear Cart</button>
                             </div>
                         )}

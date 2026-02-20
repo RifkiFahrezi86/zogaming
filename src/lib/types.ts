@@ -39,28 +39,6 @@ export interface Category {
   description: string;
 }
 
-// Order Types
-export interface OrderProduct {
-  productId: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-export interface Customer {
-  name: string;
-  email: string;
-}
-
-export interface Order {
-  id: string;
-  customer: Customer;
-  products: OrderProduct[];
-  total: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  date: string;
-}
-
 // Banner Image Types
 export interface BannerImage {
   id: string;

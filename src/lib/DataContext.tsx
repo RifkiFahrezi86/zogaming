@@ -1,16 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, Category, Order, SiteSettings, Badge, BannerImage } from './types';
+import { Product, Category, SiteSettings, Badge } from './types';
 import productsData from '@/data/products.json';
 import categoriesData from '@/data/categories.json';
-import ordersData from '@/data/orders.json';
 import badgesData from '@/data/badges.json';
 
 interface DataContextType {
     products: Product[];
     categories: Category[];
-    orders: Order[];
     settings: SiteSettings;
     badges: Badge[];
     cart: CartItem[];
@@ -20,7 +18,6 @@ interface DataContextType {
     addCategory: (category: Omit<Category, 'id'>) => void;
     updateCategory: (id: string, category: Partial<Category>) => void;
     deleteCategory: (id: string) => void;
-    updateOrderStatus: (id: string, status: Order['status']) => void;
     updateSettings: (settings: Partial<SiteSettings>) => void;
     addBadge: (badge: Omit<Badge, 'id'>) => void;
     updateBadge: (id: string, badge: Partial<Badge>) => void;
@@ -64,7 +61,6 @@ const defaultSettings: SiteSettings = {
 export function DataProvider({ children }: { children: ReactNode }) {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [orders, setOrders] = useState<Order[]>([]);
     const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
     const [badges, setBadges] = useState<Badge[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -74,14 +70,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const storedProducts = localStorage.getItem('lugx_products');
         const storedCategories = localStorage.getItem('lugx_categories');
-        const storedOrders = localStorage.getItem('lugx_orders');
         const storedSettings = localStorage.getItem('lugx_settings');
         const storedBadges = localStorage.getItem('lugx_badges');
         const storedCart = localStorage.getItem('lugx_cart');
 
         setProducts(storedProducts ? JSON.parse(storedProducts) : productsData as Product[]);
         setCategories(storedCategories ? JSON.parse(storedCategories) : categoriesData as Category[]);
-        setOrders(storedOrders ? JSON.parse(storedOrders) : ordersData as Order[]);
         setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
         setBadges(storedBadges ? JSON.parse(storedBadges) : badgesData as Badge[]);
         setCart(storedCart ? JSON.parse(storedCart) : []);
@@ -100,12 +94,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('lugx_categories', JSON.stringify(categories));
         }
     }, [categories, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_orders', JSON.stringify(orders));
-        }
-    }, [orders, isLoaded]);
 
     useEffect(() => {
         if (isLoaded) {
@@ -153,12 +141,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const deleteCategory = (id: string) => {
         setCategories((prev) => prev.filter((c) => c.id !== id));
-    };
-
-    const updateOrderStatus = (id: string, status: Order['status']) => {
-        setOrders((prev) =>
-            prev.map((o) => (o.id === id ? { ...o, status } : o))
-        );
     };
 
     const updateSettings = (newSettings: Partial<SiteSettings>) => {
@@ -228,7 +210,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             value={{
                 products,
                 categories,
-                orders,
                 settings,
                 badges,
                 cart,
@@ -238,7 +219,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 addCategory,
                 updateCategory,
                 deleteCategory,
-                updateOrderStatus,
                 updateSettings,
                 addBadge,
                 updateBadge,
