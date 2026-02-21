@@ -66,6 +66,7 @@ export interface SiteSettings {
     twitter?: string;
     instagram?: string;
   };
+  adminWhatsapp?: string;
 }
 
 // Currency helper

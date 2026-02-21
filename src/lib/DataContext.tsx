@@ -1,10 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Product, Category, SiteSettings, Badge } from './types';
-import productsData from '@/data/products.json';
-import categoriesData from '@/data/categories.json';
-import badgesData from '@/data/badges.json';
 
 interface DataContextType {
     products: Product[];
@@ -27,6 +24,7 @@ interface DataContextType {
     updateCartQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
     getBadgeById: (id: string | null) => Badge | undefined;
+    refreshData: () => Promise<void>;
 }
 
 interface CartItem {
@@ -64,106 +62,153 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
     const [badges, setBadges] = useState<Badge[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load data from localStorage or use default
-    useEffect(() => {
-        const storedProducts = localStorage.getItem('lugx_products');
-        const storedCategories = localStorage.getItem('lugx_categories');
-        const storedSettings = localStorage.getItem('lugx_settings');
-        const storedBadges = localStorage.getItem('lugx_badges');
-        const storedCart = localStorage.getItem('lugx_cart');
-
-        setProducts(storedProducts ? JSON.parse(storedProducts) : productsData as Product[]);
-        setCategories(storedCategories ? JSON.parse(storedCategories) : categoriesData as Category[]);
-        setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
-        setBadges(storedBadges ? JSON.parse(storedBadges) : badgesData as Badge[]);
-        setCart(storedCart ? JSON.parse(storedCart) : []);
-        setIsLoaded(true);
+    // Load data from API (database)
+    const refreshData = useCallback(async () => {
+        try {
+            const [productsRes, categoriesRes, badgesRes, settingsRes] = await Promise.all([
+                fetch('/api/products'),
+                fetch('/api/categories'),
+                fetch('/api/badges'),
+                fetch('/api/settings'),
+            ]);
+            const [productsData, categoriesData, badgesData, settingsData] = await Promise.all([
+                productsRes.json(),
+                categoriesRes.json(),
+                badgesRes.json(),
+                settingsRes.json(),
+            ]);
+            if (Array.isArray(productsData)) setProducts(productsData);
+            if (Array.isArray(categoriesData)) setCategories(categoriesData);
+            if (Array.isArray(badgesData)) setBadges(badgesData);
+            if (settingsData && settingsData.siteName) setSettings(settingsData);
+        } catch (err) {
+            console.error('Failed to load data from API:', err);
+        }
     }, []);
 
-    // Save to localStorage when data changes
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_products', JSON.stringify(products));
-        }
-    }, [products, isLoaded]);
+        refreshData();
+        // Load cart from localStorage (cart is browser-specific)
+        const storedCart = localStorage.getItem('lugx_cart');
+        if (storedCart) setCart(JSON.parse(storedCart));
+    }, [refreshData]);
 
+    // Save cart to localStorage
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_categories', JSON.stringify(categories));
-        }
-    }, [categories, isLoaded]);
+        localStorage.setItem('lugx_cart', JSON.stringify(cart));
+    }, [cart]);
 
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_settings', JSON.stringify(settings));
-        }
-    }, [settings, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_badges', JSON.stringify(badges));
-        }
-    }, [badges, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lugx_cart', JSON.stringify(cart));
-        }
-    }, [cart, isLoaded]);
-
-    const addProduct = (product: Omit<Product, 'id'>) => {
+    const addProduct = async (product: Omit<Product, 'id'>) => {
         const newProduct = { ...product, id: Date.now().toString() };
-        setProducts((prev) => [...prev, newProduct as Product]);
+        try {
+            await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProduct),
+            });
+            setProducts((prev) => [...prev, newProduct as Product]);
+        } catch { /* ignore */ }
     };
 
-    const updateProduct = (id: string, product: Partial<Product>) => {
-        setProducts((prev) =>
-            prev.map((p) => (p.id === id ? { ...p, ...product } : p))
-        );
+    const updateProduct = async (id: string, product: Partial<Product>) => {
+        const current = products.find(p => p.id === id);
+        if (!current) return;
+        const updated = { ...current, ...product };
+        try {
+            await fetch(`/api/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated),
+            });
+            setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...product } : p)));
+        } catch { /* ignore */ }
     };
 
-    const deleteProduct = (id: string) => {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
+    const deleteProduct = async (id: string) => {
+        try {
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            setProducts((prev) => prev.filter((p) => p.id !== id));
+        } catch { /* ignore */ }
     };
 
-    const addCategory = (category: Omit<Category, 'id'>) => {
+    const addCategory = async (category: Omit<Category, 'id'>) => {
         const newCategory = { ...category, id: Date.now().toString() };
-        setCategories((prev) => [...prev, newCategory as Category]);
+        try {
+            await fetch('/api/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCategory),
+            });
+            setCategories((prev) => [...prev, newCategory as Category]);
+        } catch { /* ignore */ }
     };
 
-    const updateCategory = (id: string, category: Partial<Category>) => {
-        setCategories((prev) =>
-            prev.map((c) => (c.id === id ? { ...c, ...category } : c))
-        );
+    const updateCategory = async (id: string, category: Partial<Category>) => {
+        const current = categories.find(c => c.id === id);
+        if (!current) return;
+        const updated = { ...current, ...category };
+        try {
+            await fetch(`/api/categories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated),
+            });
+            setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...category } : c)));
+        } catch { /* ignore */ }
     };
 
-    const deleteCategory = (id: string) => {
-        setCategories((prev) => prev.filter((c) => c.id !== id));
+    const deleteCategory = async (id: string) => {
+        try {
+            await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+            setCategories((prev) => prev.filter((c) => c.id !== id));
+        } catch { /* ignore */ }
     };
 
-    const updateSettings = (newSettings: Partial<SiteSettings>) => {
-        setSettings((prev) => ({ ...prev, ...newSettings }));
+    const updateSettings = async (newSettings: Partial<SiteSettings>) => {
+        const merged = { ...settings, ...newSettings };
+        try {
+            await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(merged),
+            });
+            setSettings(merged);
+        } catch { /* ignore */ }
     };
 
-    const addBadge = (badge: Omit<Badge, 'id'>) => {
+    const addBadge = async (badge: Omit<Badge, 'id'>) => {
         const newBadge = { ...badge, id: badge.label.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() };
-        setBadges((prev) => [...prev, newBadge as Badge]);
+        try {
+            await fetch('/api/badges', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newBadge),
+            });
+            setBadges((prev) => [...prev, newBadge as Badge]);
+        } catch { /* ignore */ }
     };
 
-    const updateBadge = (id: string, badge: Partial<Badge>) => {
-        setBadges((prev) =>
-            prev.map((b) => (b.id === id ? { ...b, ...badge } : b))
-        );
+    const updateBadge = async (id: string, badge: Partial<Badge>) => {
+        const current = badges.find(b => b.id === id);
+        if (!current) return;
+        const updated = { ...current, ...badge };
+        try {
+            await fetch(`/api/badges/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated),
+            });
+            setBadges((prev) => prev.map((b) => (b.id === id ? { ...b, ...badge } : b)));
+        } catch { /* ignore */ }
     };
 
-    const deleteBadge = (id: string) => {
-        setBadges((prev) => prev.filter((b) => b.id !== id));
-        // Remove badge from products that have it
-        setProducts((prev) =>
-            prev.map((p) => (p.badge === id ? { ...p, badge: null } : p))
-        );
+    const deleteBadge = async (id: string) => {
+        try {
+            await fetch(`/api/badges/${id}`, { method: 'DELETE' });
+            setBadges((prev) => prev.filter((b) => b.id !== id));
+            setProducts((prev) => prev.map((p) => (p.badge === id ? { ...p, badge: null } : p)));
+        } catch { /* ignore */ }
     };
 
     const addToCart = (product: Product) => {
@@ -228,6 +273,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 updateCartQuantity,
                 clearCart,
                 getBadgeById,
+                refreshData,
             }}
         >
             {children}
