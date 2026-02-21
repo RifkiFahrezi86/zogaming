@@ -105,21 +105,15 @@ export async function POST(request: Request) {
           `• ${item.productName} x${item.quantity} = Rp ${item.price.toLocaleString('id-ID')}`
         ).join('\n');
 
-        const message = `🎮 *PESANAN BARU #${orderId}*\n\n` +
-          `👤 *Customer:* ${customerName}\n` +
-          `📧 *Email:* ${customerEmail || user.email}\n` +
-          `📱 *WhatsApp:* ${customerPhone}\n\n` +
-          `📦 *Produk yang dipesan:*\n${itemsList}\n\n` +
-          `💰 *Total: Rp ${total.toLocaleString('id-ID')}*\n\n` +
-          `📝 *Catatan:* ${notes || '-'}\n\n` +
-          `Status: PENDING ⏳`;
+        const message = `*PESANAN BARU #${orderId}*\n\nCustomer: ${customerName}\nEmail: ${customerEmail || user.email}\nWhatsApp: ${customerPhone}\n\nProduk yang dipesan:\n${itemsList}\n\n*Total: Rp ${total.toLocaleString('id-ID')}*\n\nCatatan: ${notes || '-'}\n\nStatus: PENDING`;
 
         await fetch('https://api.fonnte.com/send', {
           method: 'POST',
           headers: {
             'Authorization': fonnteToken,
+            'Content-Type': 'application/json',
           },
-          body: new URLSearchParams({
+          body: JSON.stringify({
             target: adminPhone,
             message: message,
           }),

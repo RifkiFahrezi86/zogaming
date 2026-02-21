@@ -59,6 +59,14 @@ export default function AdminCustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
+
+  const resetTargetName = resetPasswordId !== null
+    ? (customers.find(c => c.id === resetPasswordId)?.name ?? selectedCustomer?.name ?? 'Customer')
+    : 'Customer';
 
   const fetchCustomers = useCallback(async () => {
     try {
@@ -104,6 +112,36 @@ export default function AdminCustomersPage() {
       }
     } catch {
       alert('Gagal menghapus customer');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPasswordId || !resetNewPassword) return;
+    if (resetNewPassword.length < 6) {
+      setResetMessage('Password minimal 6 karakter');
+      return;
+    }
+    setResetLoading(true);
+    setResetMessage('');
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: resetPasswordId, newPassword: resetNewPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetMessage(data.message || 'Password berhasil direset!');
+        setResetNewPassword('');
+        setTimeout(() => { setResetPasswordId(null); setResetMessage(''); }, 2000);
+      } else {
+        setResetMessage(data.error || 'Gagal reset password');
+      }
+    } catch {
+      setResetMessage('Terjadi kesalahan jaringan');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -165,6 +203,12 @@ export default function AdminCustomersPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-slate-500">Bergabung: {formatDate(selectedCustomer.createdAt)}</span>
+              <button
+                onClick={() => { setResetPasswordId(selectedCustomer.id); setResetNewPassword(''); setResetMessage(''); }}
+                className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-xl text-sm font-medium transition-colors"
+              >
+                Reset Password
+              </button>
               <button
                 onClick={() => deleteCustomer(selectedCustomer.id, selectedCustomer.name)}
                 className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm font-medium transition-colors"
@@ -372,6 +416,13 @@ export default function AdminCustomersPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
                         <button
+                          onClick={() => { setResetPasswordId(customer.id); setResetNewPassword(''); setResetMessage(''); }}
+                          className="p-2 rounded-lg hover:bg-amber-500/10 text-slate-400 hover:text-amber-400 transition-colors"
+                          title="Reset Password"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </button>
+                        <button
                           onClick={() => deleteCustomer(customer.id, customer.name)}
                           className="p-2 rounded-lg hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-colors"
                           title="Hapus Customer"
@@ -438,6 +489,38 @@ export default function AdminCustomersPage() {
       {detailLoading && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="w-10 h-10 border-4 border-[#ee626b] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPasswordId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setResetPasswordId(null); setResetMessage(''); }} />
+          <div className="relative bg-[#1e293b] rounded-2xl p-6 shadow-2xl w-full max-w-sm border border-slate-700/50">
+            <button onClick={() => { setResetPasswordId(null); setResetMessage(''); }} className="absolute top-3 right-3 p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h3 className="text-lg font-bold text-white mb-1">Reset Password</h3>
+            <p className="text-slate-400 text-sm mb-4">
+              {resetTargetName}
+            </p>
+
+            {resetMessage && (
+              <div className={`mb-4 p-3 rounded-xl text-sm ${resetMessage.includes('berhasil') ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
+                {resetMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Password Baru</label>
+                <input type="password" value={resetNewPassword} onChange={(e) => setResetNewPassword(e.target.value)} placeholder="Minimal 6 karakter" className="w-full h-11 px-4 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-[#ee626b] focus:outline-none" required />
+              </div>
+              <button type="submit" disabled={resetLoading} className="w-full h-11 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50">
+                {resetLoading ? 'Memproses...' : 'Reset Password'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

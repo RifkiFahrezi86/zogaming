@@ -52,6 +52,34 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showChangePw, setShowChangePw] = useState(false);
+    const [currentPw, setCurrentPw] = useState('');
+    const [newPw, setNewPw] = useState('');
+    const [confirmPw, setConfirmPw] = useState('');
+    const [pwLoading, setPwLoading] = useState(false);
+    const [pwMsg, setPwMsg] = useState('');
+    const [pwErr, setPwErr] = useState('');
+
+    const handleChangePw = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPwErr(''); setPwMsg('');
+        if (newPw !== confirmPw) { setPwErr('Konfirmasi password tidak cocok'); return; }
+        if (newPw.length < 6) { setPwErr('Password minimal 6 karakter'); return; }
+        setPwLoading(true);
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+            });
+            const data = await res.json();
+            if (!res.ok) { setPwErr(data.error || 'Gagal'); } else {
+                setPwMsg('Password berhasil diubah!');
+                setCurrentPw(''); setNewPw(''); setConfirmPw('');
+                setTimeout(() => { setShowChangePw(false); setPwMsg(''); }, 2000);
+            }
+        } catch { setPwErr('Terjadi kesalahan'); } finally { setPwLoading(false); }
+    };
 
     return (
         <div className="min-h-screen bg-[#0f172a] flex">
@@ -101,6 +129,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                             Site
                         </Link>
+                        <button onClick={() => { setShowChangePw(true); setPwErr(''); setPwMsg(''); setCurrentPw(''); setNewPw(''); setConfirmPw(''); }} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            Password
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -121,6 +153,35 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </header>
                 <main className="flex-1 p-6 overflow-auto">{children}</main>
             </div>
+
+            {/* Change Password Modal */}
+            {showChangePw && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowChangePw(false)}>
+                    <div className="bg-[#1e293b] rounded-2xl p-6 w-full max-w-md border border-slate-700/50" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-bold text-white mb-4">Ubah Password Admin</h3>
+                        <form onSubmit={handleChangePw} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Password Saat Ini</label>
+                                <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} required className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white text-sm focus:ring-2 focus:ring-[#ee626b] focus:border-transparent outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Password Baru</label>
+                                <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} required minLength={6} className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white text-sm focus:ring-2 focus:ring-[#ee626b] focus:border-transparent outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Konfirmasi Password Baru</label>
+                                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required minLength={6} className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white text-sm focus:ring-2 focus:ring-[#ee626b] focus:border-transparent outline-none" />
+                            </div>
+                            {pwErr && <p className="text-red-400 text-sm">{pwErr}</p>}
+                            {pwMsg && <p className="text-green-400 text-sm">{pwMsg}</p>}
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setShowChangePw(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-slate-700 text-white text-sm hover:bg-slate-600 transition-colors">Batal</button>
+                                <button type="submit" disabled={pwLoading} className="flex-1 px-4 py-2.5 rounded-xl bg-[#ee626b] text-white text-sm font-semibold hover:bg-[#d4555d] transition-colors disabled:opacity-50">{pwLoading ? 'Menyimpan...' : 'Simpan'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

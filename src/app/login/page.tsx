@@ -104,7 +104,12 @@ export default function LoginPage() {
             )}
           </button>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            <p>
+              <Link href="/forgot-password" className="text-slate-400 text-sm hover:text-[#ee626b] transition-colors">
+                Lupa Password?
+              </Link>
+            </p>
             <p className="text-slate-400 text-sm">
               Belum punya akun?{' '}
               <Link href="/register" className="text-[#ee626b] font-semibold hover:underline">

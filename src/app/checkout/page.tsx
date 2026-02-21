@@ -141,14 +141,7 @@ function CheckoutContent() {
       `- ${item.productName} x${item.quantity} = ${formatRupiah(item.price * item.quantity)}`
     ).join('\n');
 
-    const message = `Halo Admin ZOGAMING! 👋\n\n` +
-      `Saya sudah memesan di website:\n\n` +
-      `📋 *Order #${orderId}*\n` +
-      `👤 Nama: ${customerName}\n` +
-      `📧 Email: ${customerEmail}\n\n` +
-      `📦 Produk:\n${itemsList}\n\n` +
-      `💰 *Total: ${formatRupiah(total)}*\n\n` +
-      `Mohon konfirmasi pembayaran dan kirim akun game. Terima kasih! 🙏`;
+    const message = `Halo Admin ZOGAMING!\n\nSaya sudah memesan di website:\n\n*Order #${orderId}*\nNama: ${customerName}\nEmail: ${customerEmail}\n\nProduk:\n${itemsList}\n\n*Total: ${formatRupiah(total)}*\n\nMohon konfirmasi pembayaran dan kirim akun game. Terima kasih!`;
 
     return `https://wa.me/${adminPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
   };

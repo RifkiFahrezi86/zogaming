@@ -25,16 +25,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const fonnteToken = process.env.FONNTE_TOKEN;
         
         if (orderData.length > 0 && fonnteToken && orderData[0].customer_phone) {
-          const message = `✅ *PESANAN #${id} SELESAI!*\n\n` +
-            `Hai ${orderData[0].customer_name}! 👋\n\n` +
-            `Pesanan kamu sudah *COMPLETE* ✅\n` +
-            `Akun dan password sudah dikirim via WhatsApp.\n\n` +
-            `Terima kasih sudah belanja di ZOGAMING! 🎮`;
+          const message = `*PESANAN #${id} SELESAI!*\n\nHai ${orderData[0].customer_name}!\n\nPesanan kamu sudah *COMPLETE*.\nAkun dan password sudah dikirim via WhatsApp.\n\nTerima kasih sudah belanja di ZOGAMING!`;
 
           await fetch('https://api.fonnte.com/send', {
             method: 'POST',
-            headers: { 'Authorization': fonnteToken },
-            body: new URLSearchParams({
+            headers: { 
+              'Authorization': fonnteToken,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
               target: orderData[0].customer_phone,
               message: message,
             }),

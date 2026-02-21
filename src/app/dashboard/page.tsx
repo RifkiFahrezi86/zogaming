@@ -66,6 +66,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwMessage, setPwMessage] = useState('');
+  const [pwError, setPwError] = useState('');
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -92,6 +99,44 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError('');
+    setPwMessage('');
+
+    if (newPassword !== confirmPassword) {
+      setPwError('Konfirmasi password tidak cocok');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwError('Password baru minimal 6 karakter');
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwError(data.error || 'Gagal mengubah password');
+      } else {
+        setPwMessage('Password berhasil diubah!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => { setShowChangePassword(false); setPwMessage(''); }, 2000);
+      }
+    } catch {
+      setPwError('Terjadi kesalahan jaringan');
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
   if (authLoading || !user) return <Preloader />;
 
   const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -115,11 +160,52 @@ export default function DashboardPage() {
               <Link href="/shop" className="px-4 py-2 bg-[#ee626b] text-white text-sm font-semibold rounded-xl hover:bg-[#d4555d] transition-colors">
                 Belanja
               </Link>
+              <button onClick={() => setShowChangePassword(true)} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                Ubah Password
+              </button>
               <button onClick={handleLogout} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition-colors">
                 Keluar
               </button>
             </div>
           </div>
+
+          {/* Change Password Modal */}
+          {showChangePassword && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowChangePassword(false); setPwError(''); setPwMessage(''); }} />
+              <div className="relative bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md">
+                <button onClick={() => { setShowChangePassword(false); setPwError(''); setPwMessage(''); }} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Ubah Password</h3>
+                
+                {pwMessage && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{pwMessage}</div>
+                )}
+                {pwError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{pwError}</div>
+                )}
+
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password Lama</label>
+                    <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Masukkan password lama" className="w-full h-11 px-4 border border-gray-200 rounded-xl text-gray-900 focus:border-[#ee626b] focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+                    <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimal 6 karakter" className="w-full h-11 px-4 border border-gray-200 rounded-xl text-gray-900 focus:border-[#ee626b] focus:outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+                    <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Ulangi password baru" className="w-full h-11 px-4 border border-gray-200 rounded-xl text-gray-900 focus:border-[#ee626b] focus:outline-none" required />
+                  </div>
+                  <button type="submit" disabled={pwLoading} className="w-full h-11 bg-[#ee626b] text-white font-semibold rounded-xl hover:bg-[#d4555d] transition-colors disabled:opacity-50">
+                    {pwLoading ? 'Memproses...' : 'Ubah Password'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 mb-6">
