@@ -82,6 +82,27 @@ export async function POST() {
       `;
     }
 
+    // 7. Create admins table & add assigned_admin_id to orders
+    await sql`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        whatsapp VARCHAR(50) NOT NULL,
+        active BOOLEAN DEFAULT true,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS assigned_admin_id INTEGER`;
+
+    // 8. Seed default admin with WhatsApp number from env
+    const adminWhatsApp = process.env.ADMIN_WHATSAPP || '6285954092060';
+    await sql`
+      INSERT INTO admins (name, whatsapp, active, sort_order)
+      SELECT 'Admin 1', ${adminWhatsApp}, true, 0
+      WHERE NOT EXISTS (SELECT 1 FROM admins LIMIT 1)
+    `;
+
     return NextResponse.json({ 
       message: 'Database seeded successfully!',
       admin: { email: 'admin@zogaming.com', password: 'admin123' },
