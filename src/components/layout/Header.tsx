@@ -27,6 +27,10 @@ export default function Header() {
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cart.reduce((sum, item) => sum + (item.product.salePrice || item.product.price) * item.quantity, 0);
 
+    const isHomePage = pathname === '/';
+    // On non-home pages, always show dark header since background is light
+    const showDarkHeader = !isHomePage || isScrolled;
+
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 100);
         window.addEventListener('scroll', handleScroll);
@@ -35,11 +39,11 @@ export default function Header() {
 
     return (
         <>
-            <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-[#010101] shadow-lg rounded-b-3xl py-2' : 'bg-transparent py-10'}`}>
+            <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${showDarkHeader ? 'bg-[#010101] shadow-lg rounded-b-3xl py-2' : 'bg-transparent py-10'}`}>
                 <div className="container mx-auto px-4">
                     <nav className="flex items-center justify-between">
                         <Link href="/" className="flex-shrink-0">
-                            <Image src="/images/logo.svg" alt="ZOGAMING" width={isScrolled ? 120 : 160} height={isScrolled ? 24 : 32} className="transition-all duration-300" />
+                            <Image src="/images/logo.svg" alt="ZOGAMING" width={showDarkHeader ? 120 : 160} height={showDarkHeader ? 24 : 32} className="transition-all duration-300" />
                         </Link>
 
                         {/* Desktop Nav */}
