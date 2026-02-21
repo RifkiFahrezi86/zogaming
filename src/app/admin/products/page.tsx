@@ -12,6 +12,34 @@ export default function AdminProductsPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
+    const [fetchingImage, setFetchingImage] = useState(false);
+    const [imageUrlInput, setImageUrlInput] = useState('');
+
+    const handleImageUrl = async (url: string) => {
+        setImageUrlInput(url);
+        // If it's a direct image URL or local path, use directly
+        if (!url || url.startsWith('/') || /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(url)) {
+            setFormData(prev => ({ ...prev, image: url }));
+            return;
+        }
+        // If it looks like a webpage URL, try to fetch og:image
+        if (url.startsWith('http')) {
+            setFetchingImage(true);
+            try {
+                const res = await fetch(`/api/og-image?url=${encodeURIComponent(url)}`);
+                const data = await res.json();
+                if (data.imageUrl) {
+                    setFormData(prev => ({ ...prev, image: data.imageUrl }));
+                } else {
+                    setFormData(prev => ({ ...prev, image: url }));
+                }
+            } catch {
+                setFormData(prev => ({ ...prev, image: url }));
+            } finally {
+                setFetchingImage(false);
+            }
+        }
+    };
 
     const [formData, setFormData] = useState({
         name: '',
@@ -56,6 +84,7 @@ export default function AdminProductsPage() {
             platform: 'PC',
             downloads: '0',
         });
+        setImageUrlInput('');
         setIsModalOpen(true);
     };
 
@@ -78,6 +107,7 @@ export default function AdminProductsPage() {
             platform: (product.platform || []).join(', '),
             downloads: (product.downloads || 0).toString(),
         });
+        setImageUrlInput('');
         setIsModalOpen(true);
     };
 
@@ -339,14 +369,30 @@ export default function AdminProductsPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Image URL</label>
-                                <input
-                                    type="text"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="w-full h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#010101]"
-                                    placeholder="/images/trending-01.jpg atau https://example.com/gambar.jpg"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Bisa pakai URL lokal (/images/...) atau URL external (https://...)</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={imageUrlInput || formData.image}
+                                        onChange={(e) => { setImageUrlInput(e.target.value); setFormData({ ...formData, image: e.target.value }); }}
+                                        onBlur={(e) => handleImageUrl(e.target.value)}
+                                        className="flex-1 h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#010101]"
+                                        placeholder="/images/game.jpg atau https://store.steampowered.com/app/..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleImageUrl(imageUrlInput || formData.image)}
+                                        disabled={fetchingImage}
+                                        className="px-3 h-10 bg-slate-700 text-white text-xs rounded-xl hover:bg-slate-600 transition-colors disabled:opacity-50 flex-shrink-0"
+                                    >
+                                        {fetchingImage ? (
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        ) : 'Ambil Gambar'}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Paste URL halaman web (Steam, dll) — gambar akan diambil otomatis. Atau paste URL gambar langsung.</p>
+                                {formData.image && formData.image !== imageUrlInput && imageUrlInput && (
+                                    <p className="text-xs text-green-400 mt-1">Gambar ditemukan: {formData.image.substring(0, 60)}...</p>
+                                )}
                                 {formData.image && (
                                     <div className="mt-2 w-20 h-20 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
                                         <Image src={formData.image} alt="Preview" width={80} height={80} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />

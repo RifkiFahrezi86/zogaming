@@ -23,6 +23,32 @@ export default function AdminBannerImagesPage() {
     const [editingImage, setEditingImage] = useState<BannerImage | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [fetchingImage, setFetchingImage] = useState(false);
+    const [bannerUrlInput, setBannerUrlInput] = useState('');
+
+    const handleBannerImageUrl = async (url: string) => {
+        setBannerUrlInput(url);
+        if (!url || url.startsWith('/') || /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i.test(url)) {
+            setImageForm(prev => ({ ...prev, imageUrl: url }));
+            return;
+        }
+        if (url.startsWith('http')) {
+            setFetchingImage(true);
+            try {
+                const res = await fetch(`/api/og-image?url=${encodeURIComponent(url)}`);
+                const data = await res.json();
+                if (data.imageUrl) {
+                    setImageForm(prev => ({ ...prev, imageUrl: data.imageUrl }));
+                } else {
+                    setImageForm(prev => ({ ...prev, imageUrl: url }));
+                }
+            } catch {
+                setImageForm(prev => ({ ...prev, imageUrl: url }));
+            } finally {
+                setFetchingImage(false);
+            }
+        }
+    };
 
     const [imageForm, setImageForm] = useState<BannerImage>({
         id: '',
@@ -38,6 +64,7 @@ export default function AdminBannerImagesPage() {
 
     const openAddForm = () => {
         setEditingImage(null);
+        setBannerUrlInput('');
         setImageForm({
             id: 'bi' + Date.now(),
             title: '',
@@ -52,6 +79,7 @@ export default function AdminBannerImagesPage() {
 
     const openEditForm = (image: BannerImage) => {
         setEditingImage(image);
+        setBannerUrlInput('');
         setImageForm({ ...image, badgeColor: image.badgeColor || '#ee626b', badgeTextColor: image.badgeTextColor || '#ffffff' });
         setIsFormOpen(true);
     };
@@ -286,14 +314,30 @@ export default function AdminBannerImagesPage() {
                             {/* Image URL */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">URL Gambar</label>
-                                <input
-                                    type="text"
-                                    value={imageForm.imageUrl}
-                                    onChange={(e) => setImageForm({ ...imageForm, imageUrl: e.target.value })}
-                                    className="w-full h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#ee626b]"
-                                    placeholder="/images/banner-bg.jpg atau https://example.com/gambar.jpg"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Bisa pakai URL lokal (/images/...) atau URL external (https://...)</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={bannerUrlInput || imageForm.imageUrl}
+                                        onChange={(e) => { setBannerUrlInput(e.target.value); setImageForm({ ...imageForm, imageUrl: e.target.value }); }}
+                                        onBlur={(e) => handleBannerImageUrl(e.target.value)}
+                                        className="flex-1 h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#ee626b]"
+                                        placeholder="/images/banner.jpg atau https://store.steampowered.com/app/..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleBannerImageUrl(bannerUrlInput || imageForm.imageUrl)}
+                                        disabled={fetchingImage}
+                                        className="px-3 h-10 bg-slate-700 text-white text-xs rounded-xl hover:bg-slate-600 transition-colors disabled:opacity-50 flex-shrink-0"
+                                    >
+                                        {fetchingImage ? (
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        ) : 'Ambil'}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Paste URL halaman web — gambar diambil otomatis. Atau paste URL gambar langsung.</p>
+                                {imageForm.imageUrl && imageForm.imageUrl !== bannerUrlInput && bannerUrlInput && (
+                                    <p className="text-xs text-green-400 mt-1">Gambar ditemukan!</p>
+                                )}
                                 {/* Image Preview */}
                                 {imageForm.imageUrl && (
                                     <div className="mt-3 rounded-xl overflow-hidden bg-slate-800 aspect-video relative">
