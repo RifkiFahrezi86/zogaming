@@ -32,6 +32,18 @@ export async function GET(request: Request) {
     const ordersWithItems = await Promise.all(
       orders.map(async (order: Record<string, unknown>) => {
         const items = await sql`SELECT * FROM order_items WHERE order_id = ${order.id}`;
+
+        // Try to get assigned admin info
+        let assignedAdmin = null;
+        try {
+          if (order.assigned_admin_id) {
+            const adminRows = await sql`SELECT id, name, whatsapp FROM admins WHERE id = ${order.assigned_admin_id}`;
+            if (adminRows.length > 0) {
+              assignedAdmin = { id: adminRows[0].id, name: adminRows[0].name, whatsapp: adminRows[0].whatsapp };
+            }
+          }
+        } catch { /* admins table may not exist */ }
+
         return {
           id: order.id,
           userId: order.user_id,
@@ -43,6 +55,8 @@ export async function GET(request: Request) {
           notes: order.notes,
           createdAt: order.created_at,
           updatedAt: order.updated_at,
+          assignedAdminId: order.assigned_admin_id || null,
+          assignedAdmin,
           items: items.map((item: Record<string, unknown>) => ({
             id: item.id,
             productId: item.product_id,
@@ -78,10 +92,49 @@ export async function POST(request: Request) {
 
     const sql = getDb();
 
+    // Round-robin: Find next admin to assign
+    let assignedAdminId: number | null = null;
+    let assignedAdminPhone: string | null = null;
+    try {
+      // Ensure admins table exists
+      await sql`
+        CREATE TABLE IF NOT EXISTS admins (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          whatsapp VARCHAR(50) NOT NULL,
+          active BOOLEAN DEFAULT true,
+          sort_order INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+      // Ensure assigned_admin_id column exists
+      try {
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS assigned_admin_id INTEGER`;
+      } catch { /* column exists */ }
+
+      const activeAdmins = await sql`SELECT id, whatsapp FROM admins WHERE active = true ORDER BY sort_order, id`;
+      
+      if (activeAdmins.length > 0) {
+        // Get the last assigned admin id
+        const lastAssigned = await sql`SELECT assigned_admin_id FROM orders WHERE assigned_admin_id IS NOT NULL ORDER BY id DESC LIMIT 1`;
+        
+        let nextIdx = 0;
+        if (lastAssigned.length > 0 && lastAssigned[0].assigned_admin_id) {
+          const lastIdx = activeAdmins.findIndex((a: Record<string, unknown>) => a.id === lastAssigned[0].assigned_admin_id);
+          nextIdx = (lastIdx + 1) % activeAdmins.length;
+        }
+        
+        assignedAdminId = activeAdmins[nextIdx].id as number;
+        assignedAdminPhone = activeAdmins[nextIdx].whatsapp as string;
+      }
+    } catch (e) {
+      console.error('Round-robin admin lookup error:', e);
+    }
+
     // Create order
     const orderResult = await sql`
-      INSERT INTO orders (user_id, customer_name, customer_email, customer_phone, total, status, notes)
-      VALUES (${user.userId}, ${customerName}, ${customerEmail || user.email}, ${customerPhone}, ${total}, 'pending', ${notes || ''})
+      INSERT INTO orders (user_id, customer_name, customer_email, customer_phone, total, status, notes, assigned_admin_id)
+      VALUES (${user.userId}, ${customerName}, ${customerEmail || user.email}, ${customerPhone}, ${total}, 'pending', ${notes || ''}, ${assignedAdminId})
       RETURNING id
     `;
 
@@ -95,9 +148,9 @@ export async function POST(request: Request) {
       `;
     }
 
-    // Send WhatsApp notification to admin
+    // Send WhatsApp notification to assigned admin (or fallback to env)
     try {
-      const adminPhone = process.env.ADMIN_WHATSAPP;
+      const adminPhone = assignedAdminPhone || process.env.ADMIN_WHATSAPP;
       const fonnteToken = process.env.FONNTE_TOKEN;
       
       if (adminPhone && fonnteToken) {
@@ -128,6 +181,8 @@ export async function POST(request: Request) {
       orderId, 
       message: 'Pesanan berhasil dibuat!',
       total,
+      assignedAdminId,
+      assignedAdminPhone,
     });
   } catch (error) {
     console.error('POST orders error:', error);

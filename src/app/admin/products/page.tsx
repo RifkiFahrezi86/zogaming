@@ -344,8 +344,14 @@ export default function AdminProductsPage() {
                                     value={formData.image}
                                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                     className="w-full h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#010101]"
-                                    placeholder="/images/trending-01.jpg"
+                                    placeholder="/images/trending-01.jpg atau https://example.com/gambar.jpg"
                                 />
+                                <p className="text-xs text-slate-500 mt-1">Bisa pakai URL lokal (/images/...) atau URL external (https://...)</p>
+                                {formData.image && (
+                                    <div className="mt-2 w-20 h-20 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                                        <Image src={formData.image} alt="Preview" width={80} height={80} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>

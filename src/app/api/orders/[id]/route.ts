@@ -54,15 +54,36 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthUser();
-    if (!user || user.role !== 'admin') {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
     const sql = getDb();
-    await sql`DELETE FROM orders WHERE id = ${parseInt(id)}`;
+    const orderId = parseInt(id);
 
-    return NextResponse.json({ message: 'Order deleted' });
+    if (user.role === 'admin') {
+      // Admin can delete any order
+      await sql`DELETE FROM order_items WHERE order_id = ${orderId}`;
+      await sql`DELETE FROM orders WHERE id = ${orderId}`;
+      return NextResponse.json({ message: 'Order deleted' });
+    }
+
+    // Customer can only cancel their own pending orders
+    const orderRows = await sql`SELECT * FROM orders WHERE id = ${orderId} AND user_id = ${user.userId}`;
+    if (orderRows.length === 0) {
+      return NextResponse.json({ error: 'Pesanan tidak ditemukan' }, { status: 404 });
+    }
+
+    const order = orderRows[0];
+    if (order.status !== 'pending') {
+      return NextResponse.json({ error: 'Hanya pesanan dengan status "Menunggu" yang bisa dibatalkan' }, { status: 400 });
+    }
+
+    // Cancel the order (set status to cancelled instead of deleting)
+    await sql`UPDATE orders SET status = 'cancelled', updated_at = NOW() WHERE id = ${orderId}`;
+
+    return NextResponse.json({ message: 'Pesanan berhasil dibatalkan' });
   } catch (error) {
     console.error('DELETE order error:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });

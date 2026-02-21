@@ -34,6 +34,7 @@ function CheckoutContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [assignedAdminPhone, setAssignedAdminPhone] = useState<string>('');
 
   // Items to checkout: either single product or cart
   const [checkoutItems, setCheckoutItems] = useState<Array<{
@@ -123,6 +124,7 @@ function CheckoutContent() {
       }
 
       setOrderId(data.orderId);
+      if (data.assignedAdminPhone) setAssignedAdminPhone(data.assignedAdminPhone);
       setSuccess(true);
 
       // Clear cart if ordering from cart
@@ -136,7 +138,7 @@ function CheckoutContent() {
   };
 
   const getWhatsAppUrl = () => {
-    const adminPhone = settings.adminWhatsApp || process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || '6285954092060';
+    const adminPhone = assignedAdminPhone || settings.adminWhatsApp || process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || '6285954092060';
     const itemsList = checkoutItems.map(item => 
       `- ${item.productName} x${item.quantity} = ${formatRupiah(item.price * item.quantity)}`
     ).join('\n');

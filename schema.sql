@@ -96,6 +96,19 @@ CREATE TABLE IF NOT EXISTS banner_images (
   sort_order INTEGER DEFAULT 0
 );
 
+-- 9. Admins table (multi-admin with WhatsApp numbers)
+CREATE TABLE IF NOT EXISTS admins (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  whatsapp VARCHAR(50) NOT NULL,
+  active BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Add assigned_admin_id to orders for round-robin routing
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS assigned_admin_id INTEGER REFERENCES admins(id) ON DELETE SET NULL;
+
 -- ============================================
 -- INDEXES for performance
 -- ============================================
@@ -107,3 +120,4 @@ CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_admins_active ON admins(active);

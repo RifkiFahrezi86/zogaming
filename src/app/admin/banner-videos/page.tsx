@@ -291,8 +291,9 @@ export default function AdminBannerImagesPage() {
                                     value={imageForm.imageUrl}
                                     onChange={(e) => setImageForm({ ...imageForm, imageUrl: e.target.value })}
                                     className="w-full h-10 px-4 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-[#ee626b]"
-                                    placeholder="/images/banner-bg.jpg"
+                                    placeholder="/images/banner-bg.jpg atau https://example.com/gambar.jpg"
                                 />
+                                <p className="text-xs text-slate-500 mt-1">Bisa pakai URL lokal (/images/...) atau URL external (https://...)</p>
                                 {/* Image Preview */}
                                 {imageForm.imageUrl && (
                                     <div className="mt-3 rounded-xl overflow-hidden bg-slate-800 aspect-video relative">

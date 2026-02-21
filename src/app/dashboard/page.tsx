@@ -99,6 +99,21 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  const handleCancelOrder = async (orderId: number) => {
+    if (!confirm('Yakin ingin membatalkan pesanan ini? Pesanan yang dibatalkan tidak bisa dikembalikan.')) return;
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Gagal membatalkan pesanan');
+        return;
+      }
+      fetchOrders();
+    } catch {
+      alert('Terjadi kesalahan jaringan');
+    }
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwError('');
@@ -356,6 +371,14 @@ export default function DashboardPage() {
 
                         <div className="border-t mt-4 pt-4 flex justify-between items-center">
                           <span className="text-lg font-bold text-gray-900">Total: {formatRupiah(order.total)}</span>
+                          {order.status === 'pending' && (
+                            <button
+                              onClick={() => handleCancelOrder(order.id)}
+                              className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 transition-colors"
+                            >
+                              Batalkan Pesanan
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
