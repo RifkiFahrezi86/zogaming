@@ -136,7 +136,7 @@ function CheckoutContent() {
   };
 
   const getWhatsAppUrl = () => {
-    const adminPhone = settings.adminWhatsapp || process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || '6281234567890';
+    const adminPhone = settings.adminWhatsApp || process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || '6285954092060';
     const itemsList = checkoutItems.map(item => 
       `- ${item.productName} x${item.quantity} = ${formatRupiah(item.price * item.quantity)}`
     ).join('\n');
